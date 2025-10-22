@@ -30,6 +30,7 @@ const appAuthor = packageJson.author;
 const appElectron = process.versions.electron;
 const appRepo = packageJson.repository;
 const appIcon = app.getAppPath() + '/assets/icons/ntfy.png';
+const windowsAppId = packageJson.build?.appId ?? 'com.ntfydesktop.id';
 
 /**
     Define > Env Variables
@@ -37,6 +38,13 @@ const appIcon = app.getAppPath() + '/assets/icons/ntfy.png';
 
 const LOG_LEVEL = process.env.LOG_LEVEL || 4;
 const DEV_MODE = process.env.DEV_MODE || false;
+
+/**
+    Windows specific configuration
+*/
+
+if ( process.platform === 'win32' )
+    app.setAppUserModelId( windowsAppId );
 
 /**
     initialize electron-log for main process
@@ -783,7 +791,7 @@ async function GetMessages( )
 
         if ( !msgHistory.includes( id ) )
         {
-            toasted.notify({
+            const toastPayload = {
                 title: `${ topic } - ${ dateHuman }`,
                 subtitle: `${ dateHuman }`,
                 message: `${ message }`,
@@ -791,7 +799,12 @@ async function GetMessages( )
                 open: cfgInstanceURL,
                 persistent: cfgPersistent,
                 sticky: cfgPersistent
-            });
+            };
+
+            if ( process.platform === 'win32' )
+                toastPayload.appID = windowsAppId;
+
+            toasted.notify( toastPayload );
 
             msgHistory.push( id );
 
